@@ -149,6 +149,16 @@
         <div class="loading" id="chart-loading">Loading chart...</div>
         <div id="chart"></div>
       </div>
+
+      <div class="chart-container" style="margin-top:16px;">
+        <div class="loading" id="volume-loading">Loading volume chart...</div>
+        <div id="volume-chart"></div>
+      </div>
+
+      <div class="chart-container" style="margin-top:16px;">
+        <div class="loading" id="amount-loading">Loading amount chart...</div>
+        <div id="amount-chart"></div>
+      </div>
     </div>
 
     <script>
@@ -206,8 +216,62 @@
         }
       }
 
+      async function loadVolumeChart() {
+        const loading = document.getElementById("volume-loading");
+        loading.textContent = "Loading volume chart...";
+        loading.classList.remove("hidden");
+
+        try {
+          const resp = await fetch("/api/volume-chart");
+          const result = await resp.json();
+
+          if (!result.success) {
+            loading.textContent = "Failed to load: " + result.error;
+            return;
+          }
+
+          const chartData = JSON.parse(result.chart);
+          Plotly.newPlot("volume-chart", chartData.data, chartData.layout, {
+            responsive: true,
+            displaylogo: false,
+          });
+        } catch (e) {
+          loading.textContent = "Error: " + e.message;
+        } finally {
+          loading.classList.add("hidden");
+        }
+      }
+
+      async function loadAmountChart() {
+        const loading = document.getElementById("amount-loading");
+        loading.textContent = "Loading amount chart...";
+        loading.classList.remove("hidden");
+
+        try {
+          const resp = await fetch("/api/amount-chart");
+          const result = await resp.json();
+
+          if (!result.success) {
+            loading.textContent = "Failed to load: " + result.error;
+            return;
+          }
+
+          const chartData = JSON.parse(result.chart);
+          Plotly.newPlot("amount-chart", chartData.data, chartData.layout, {
+            responsive: true,
+            displaylogo: false,
+          });
+        } catch (e) {
+          loading.textContent = "Error: " + e.message;
+        } finally {
+          loading.classList.add("hidden");
+        }
+      }
+
       async function refreshChart() {
         await loadChart();
+        await loadVolumeChart();
+        await loadAmountChart();
         await updateStatus();
       }
 
@@ -225,6 +289,8 @@
       document.addEventListener("DOMContentLoaded", () => {
         updateStatus();
         loadChart();
+        loadVolumeChart();
+        loadAmountChart();
 
         // Auto-refresh every 5 mins
         autoRefreshTimer = setInterval(() => {

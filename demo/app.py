@@ -75,7 +75,6 @@ def initialize():
 
 @app.route("/")
 def index():
-    initialize()
     return render_template("index.html")
 
 
@@ -180,12 +179,139 @@ def api_chart():
     return jsonify({"success": True, "chart": chart_json})
 
 
+@app.route("/api/volume-chart")
+def api_volume_chart():
+    """Return a Plotly bar chart JSON for volume data with prediction overlay."""
+    try:
+        df = load_local_data()
+        if df.empty:
+            df = update_local_data()
+        if scheduler:
+            scheduler.last_data = df
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Data fetch failed: {e}"}), 500
+
+    records = load_all_predictions(HISTORY_DIR)
+    fig = go.Figure()
+
+    # Historical volume bars
+    fig.add_trace(
+        go.Bar(
+            x=df["timestamps"].tolist(),
+            y=df["volume"].tolist(),
+            name="Historical Volume",
+            marker_color="#4285F4",
+            opacity=0.75,
+        )
+    )
+
+    # Latest prediction volume bars
+    if records:
+        latest = records[-1]
+        preds = latest["predictions"]
+        if preds:
+            pred_timestamps = [p["timestamp"] for p in preds]
+            pred_volumes = [p["volume"] for p in preds]
+
+            raw_label = latest.get("pred_time", "")
+
+            time_label = raw_label.split("T")[1][:5]
+
+            fig.add_trace(
+                go.Bar(
+                    x=pred_timestamps,
+                    y=pred_volumes,
+                    name=f"Pred Volume {time_label}",
+                    marker_color="#FF8C00",
+                    opacity=0.85,
+                )
+            )
+
+    fig.update_layout(
+        template="plotly_white",
+        height=450,
+        title="ETH/USDT 5m — Volume",
+        xaxis_title="Time",
+        yaxis_title="Volume (ETH)",
+        xaxis_rangeslider_visible=False,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=40, r=40, t=60, b=40),
+        barmode="overlay",
+    )
+
+    chart_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    return jsonify({"success": True, "chart": chart_json})
+
+
+@app.route("/api/amount-chart")
+def api_amount_chart():
+    """Return a Plotly bar chart JSON for amount data with prediction overlay."""
+    try:
+        df = load_local_data()
+        if df.empty:
+            df = update_local_data()
+        if scheduler:
+            scheduler.last_data = df
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Data fetch failed: {e}"}), 500
+
+    records = load_all_predictions(HISTORY_DIR)
+    fig = go.Figure()
+
+    # Historical amount bars
+    fig.add_trace(
+        go.Bar(
+            x=df["timestamps"].tolist(),
+            y=df["amount"].tolist(),
+            name="Historical Amount",
+            marker_color="#34A853",
+            opacity=0.75,
+        )
+    )
+
+    # Latest prediction amount bars
+    if records:
+        latest = records[-1]
+        preds = latest["predictions"]
+        if preds:
+            pred_timestamps = [p["timestamp"] for p in preds]
+            pred_amounts = [p["amount"] for p in preds]
+
+            raw_label = latest.get("pred_time", "")
+            time_label = raw_label.split("T")[1][:5]
+
+            fig.add_trace(
+                go.Bar(
+                    x=pred_timestamps,
+                    y=pred_amounts,
+                    name=f"Pred Amount {time_label}",
+                    marker_color="#EA4335",
+                    opacity=0.85,
+                )
+            )
+
+    fig.update_layout(
+        template="plotly_white",
+        height=450,
+        title="ETH/USDT 5m — Amount",
+        xaxis_title="Time",
+        yaxis_title="Amount (USDT)",
+        xaxis_rangeslider_visible=False,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=40, r=40, t=60, b=40),
+        barmode="overlay",
+    )
+
+    chart_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    return jsonify({"success": True, "chart": chart_json})
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 os.makedirs(HISTORY_DIR, exist_ok=True)
-initialize()
+# initialize()
 
 if __name__ == "__main__":
     print("=" * 50)
