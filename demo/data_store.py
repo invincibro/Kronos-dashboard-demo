@@ -19,7 +19,7 @@ from binance_fetcher import (
 )
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-DATA_PATH = os.path.join(DATA_DIR, "ethusdt_15m.csv")
+DATA_PATH = os.path.join(DATA_DIR, "ethusdt_5m.csv")
 
 COLUMNS = ["timestamps", "open", "high", "low", "close", "volume", "amount"]
 

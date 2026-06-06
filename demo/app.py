@@ -168,7 +168,7 @@ def api_chart():
     fig.update_layout(
         template="plotly_white",
         height=750,
-        title="ETH/USDT 15m — Real Data + Historical Predictions",
+        title="ETH/USDT 5m — Real Data + Historical Predictions",
         xaxis_title="Time",
         yaxis_title="Price (USDT)",
         xaxis_rangeslider_visible=False,
