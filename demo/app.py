@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import threading
+from datetime import timedelta
 import plotly
 import plotly.graph_objects as go
 from flask import Flask, jsonify, render_template
@@ -135,7 +136,7 @@ def api_chart():
         "#DC143C",  # crimson
         "#FF69B4",  # hot pink
     ]
-
+    # display the most recent 3 predictions for clarity
     for i, record in enumerate(records[-3:]):
         preds = record["predictions"]
         if not preds:
@@ -163,6 +164,16 @@ def api_chart():
             )
         )
 
+    # Calculate x-axis range: last 24h historical + all prediction data
+    x_start = (df["timestamps"].iloc[-1] - timedelta(hours=24)).isoformat()
+    x_end = df["timestamps"].iloc[-1].isoformat()
+    for record in records[-3:]:
+        preds = record.get("predictions", [])
+        if preds:
+            last_pred_ts = preds[-1]["timestamp"]
+            if last_pred_ts > x_end:
+                x_end = last_pred_ts
+
     # Layout
     fig.update_layout(
         template="plotly_white",
@@ -170,6 +181,7 @@ def api_chart():
         title="ETH/USDT 5m — Real Data + Historical Predictions",
         xaxis_title="Time",
         yaxis_title="Price (USDT)",
+        xaxis_range=[x_start, x_end],
         xaxis_rangeslider_visible=False,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(l=40, r=40, t=60, b=40),
@@ -227,12 +239,21 @@ def api_volume_chart():
                 )
             )
 
+    # Calculate x-axis range: last 24h historical + all prediction data
+    x_start = (df["timestamps"].iloc[-1] - timedelta(hours=24)).isoformat()
+    x_end = df["timestamps"].iloc[-1].isoformat()
+    if records:
+        preds = records[-1].get("predictions", [])
+        if preds and preds[-1]["timestamp"] > x_end:
+            x_end = preds[-1]["timestamp"]
+
     fig.update_layout(
         template="plotly_white",
         height=450,
         title="ETH/USDT 5m — Volume",
         xaxis_title="Time",
         yaxis_title="Volume (ETH)",
+        xaxis_range=[x_start, x_end],
         xaxis_rangeslider_visible=False,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(l=40, r=40, t=60, b=40),
@@ -290,12 +311,21 @@ def api_amount_chart():
                 )
             )
 
+    # Calculate x-axis range: last 24h historical + all prediction data
+    x_start = (df["timestamps"].iloc[-1] - timedelta(hours=24)).isoformat()
+    x_end = df["timestamps"].iloc[-1].isoformat()
+    if records:
+        preds = records[-1].get("predictions", [])
+        if preds and preds[-1]["timestamp"] > x_end:
+            x_end = preds[-1]["timestamp"]
+
     fig.update_layout(
         template="plotly_white",
         height=450,
         title="ETH/USDT 5m — Amount",
         xaxis_title="Time",
         yaxis_title="Amount (USDT)",
+        xaxis_range=[x_start, x_end],
         xaxis_rangeslider_visible=False,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(l=40, r=40, t=60, b=40),
@@ -311,7 +341,7 @@ def api_amount_chart():
 # ---------------------------------------------------------------------------
 
 os.makedirs(HISTORY_DIR, exist_ok=True)
-initialize()
+# initialize()
 
 if __name__ == "__main__":
     print("=" * 50)
