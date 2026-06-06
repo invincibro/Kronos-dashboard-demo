@@ -311,7 +311,7 @@ def api_amount_chart():
 # ---------------------------------------------------------------------------
 
 os.makedirs(HISTORY_DIR, exist_ok=True)
-# initialize()
+initialize()
 
 if __name__ == "__main__":
     print("=" * 50)
