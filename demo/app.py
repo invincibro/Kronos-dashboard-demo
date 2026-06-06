@@ -42,7 +42,7 @@ def initialize():
             print("Model loaded.")
 
             print("Fetching initial Binance data...")
-            update_local_data("ETHUSDT")
+            update_local_data()
             print("Initial data fetched.")
 
             scheduler = PredictionScheduler(
@@ -109,7 +109,7 @@ def api_chart():
     try:
         df = load_local_data()
         if df.empty:
-            df = update_local_data("ETHUSDT")
+            df = update_local_data()
         if scheduler:
             scheduler.last_data = df
     except Exception as e:

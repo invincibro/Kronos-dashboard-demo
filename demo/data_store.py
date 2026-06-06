@@ -32,7 +32,7 @@ def load_local_data():
     return df
 
 
-def update_local_data(symbol="ETHUSDT", interval="15m"):
+def update_local_data():
     """Incrementally update the local data store.
 
     1. Load existing CSV
@@ -49,7 +49,7 @@ def update_local_data(symbol="ETHUSDT", interval="15m"):
 
     if df.empty:
         # First run: full 30-day fetch
-        df = get_last_30_days(symbol, interval)
+        df = get_last_30_days()
         df.to_csv(DATA_PATH, index=False)
         return df
 
@@ -61,7 +61,7 @@ def update_local_data(symbol="ETHUSDT", interval="15m"):
         return df
 
     # Fetch only new candles
-    raw = fetch_klines_since(symbol, interval, last_ts_ms)
+    raw = fetch_klines_since(last_ts_ms)
     if raw:
         new_df = convert_to_kronos_format(raw)
         df = pd.concat([df, new_df], ignore_index=True)

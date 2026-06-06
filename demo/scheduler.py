@@ -83,7 +83,7 @@ class PredictionScheduler:
 
     def _run_cycle(self):
         try:
-            df = update_local_data("ETHUSDT")
+            df = update_local_data()
 
             with self._lock:
                 self.last_data = df
