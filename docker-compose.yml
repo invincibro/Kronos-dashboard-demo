@@ -6,5 +6,5 @@ services:
     ports:
       - "9090:7071"
     volumes:
-      - ./data:/app/demo/data
-      - ./prediction_history:/app/demo/prediction_history
+      - .demo-volume/data:/app/demo/data
+      - .demo-volume/prediction_history:/app/demo/prediction_history
