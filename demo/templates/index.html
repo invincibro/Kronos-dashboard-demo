@@ -159,14 +159,6 @@
           const resp = await fetch("/api/status");
           const s = await resp.json();
 
-          document.getElementById("st-model").textContent = s.model_loaded
-            ? "Loaded"
-            : "--";
-          document.getElementById("st-model").className =
-            "status-value " + (s.model_loaded ? "ok" : "warn");
-          document.getElementById("st-count").textContent =
-            s.prediction_count || 0;
-
           if (s.last_run) {
             const d = new Date(s.last_run);
             document.getElementById("st-last").textContent =
