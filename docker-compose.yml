@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "9090:7071"
+    volumes:
+      - ./data:/app/demo/data
+      - ./prediction_history:/app/demo/prediction_history
