@@ -89,19 +89,6 @@ def api_status():
     return jsonify(status)
 
 
-@app.route("/api/realtime-data")
-def api_realtime_data():
-    try:
-        df = load_local_data()
-        if df.empty:
-            df = update_local_data("ETHUSDT")
-        if scheduler:
-            scheduler.last_data = df
-        return jsonify({"success": True, "data": dataframe_to_json(df)})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
 @app.route("/api/prediction-history")
 def api_prediction_history():
     records = load_all_predictions(HISTORY_DIR)
@@ -114,18 +101,6 @@ def api_latest_prediction():
     if records:
         return jsonify({"success": True, "prediction": records[-1]})
     return jsonify({"success": False, "error": "No predictions yet"}), 404
-
-
-@app.route("/api/trigger-prediction", methods=["POST"])
-def api_trigger_prediction():
-    if scheduler is None:
-        return jsonify({"success": False, "error": "Scheduler not initialized"}), 400
-    try:
-        scheduler.trigger_now()
-        status = scheduler.get_status()
-        return jsonify({"success": True, "status": status})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/chart")
@@ -209,10 +184,11 @@ def api_chart():
 # Main
 # ---------------------------------------------------------------------------
 
+os.makedirs(HISTORY_DIR, exist_ok=True)
+initialize()
+
 if __name__ == "__main__":
-    os.makedirs(HISTORY_DIR, exist_ok=True)
     print("=" * 50)
     print("Kronos ETH/USDT Live Prediction Demo")
     print("=" * 50)
-    initialize()
     app.run(debug=False, host="0.0.0.0", port=7071)
