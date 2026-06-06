@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kronos ETH/USDT Live Prediction</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f5f6fa;
+        color: #2d3436;
+      }
+      .header {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 12px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header h1 {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .status-bar {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+      }
+      .status-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .status-label {
+        color: #a6adc8;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+      .status-value {
+        font-weight: 600;
+      }
+      .status-value.ok {
+        color: #a6e3a1;
+      }
+      .status-value.warn {
+        color: #f9e2af;
+      }
+      .status-value.err {
+        color: #f38ba8;
+      }
+      .main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .btn-primary {
+        background: #89b4fa;
+        color: #1e1e2e;
+      }
+      .btn-primary:hover {
+        background: #74c7ec;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .error-box {
+        background: #f38ba8;
+        color: #1e1e2e;
+        padding: 10px 16px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        display: none;
+        font-size: 13px;
+      }
+      .chart-container {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      #chart {
+        min-height: 750px;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #a6adc8;
+        visibility: visible;
+      }
+      .loading.hidden {
+        visibility: hidden;
+        padding: 8px 0;
+        height: 36px;
+      }
+      .info-note {
+        font-size: 12px;
+        color: #a6adc8;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Kronos ETH/USDT Live Prediction</h1>
+      <div class="status-bar">
+        <div class="status-item">
+          <span class="status-label">Last Run</span>
+          <span class="status-value" id="st-last">--</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Next Run</span>
+          <span class="status-value" id="st-next">--</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="error-box" id="error-box"></div>
+
+      <div class="controls">
+        <button class="btn" onclick="refreshChart()">Refresh Chart</button>
+        <span class="info-note" id="refresh-note"></span>
+      </div>
+
+      <div class="chart-container">
+        <div class="loading" id="chart-loading">Loading chart...</div>
+        <div id="chart"></div>
+      </div>
+    </div>
+
+    <script>
+      let autoRefreshTimer = null;
+
+      async function updateStatus() {
+        try {
+          const resp = await fetch("/api/status");
+          const s = await resp.json();
+
+          document.getElementById("st-model").textContent = s.model_loaded
+            ? "Loaded"
+            : "--";
+          document.getElementById("st-model").className =
+            "status-value " + (s.model_loaded ? "ok" : "warn");
+          document.getElementById("st-count").textContent =
+            s.prediction_count || 0;
+
+          if (s.last_run) {
+            const d = new Date(s.last_run);
+            document.getElementById("st-last").textContent =
+              d.toLocaleTimeString();
+          }
+          if (s.next_run) {
+            const d = new Date(s.next_run);
+            document.getElementById("st-next").textContent =
+              d.toLocaleTimeString();
+          }
+          if (s.last_error) {
+            showError(s.last_error);
+          }
+        } catch (e) {
+          console.error("Status fetch error:", e);
+        }
+      }
+
+      async function loadChart() {
+        const loading = document.getElementById("chart-loading");
+        loading.textContent = "Loading chart data...";
+        loading.classList.remove("hidden");
+
+        try {
+          const resp = await fetch("/api/chart");
+          const result = await resp.json();
+
+          if (!result.success) {
+            loading.textContent = "Failed to load chart: " + result.error;
+            return;
+          }
+
+          const chartData = JSON.parse(result.chart);
+          Plotly.newPlot("chart", chartData.data, chartData.layout, {
+            responsive: true,
+            displaylogo: false,
+          });
+
+          document.getElementById("refresh-note").textContent =
+            "Last updated: " + new Date().toLocaleTimeString();
+        } catch (e) {
+          loading.textContent = "Error: " + e.message;
+        } finally {
+          loading.classList.add("hidden");
+        }
+      }
+
+      async function refreshChart() {
+        await loadChart();
+        await updateStatus();
+      }
+
+      function showError(msg) {
+        const box = document.getElementById("error-box");
+        box.textContent = msg;
+        box.style.display = "block";
+      }
+
+      function hideError() {
+        document.getElementById("error-box").style.display = "none";
+      }
+
+      // Startup
+      document.addEventListener("DOMContentLoaded", () => {
+        updateStatus();
+        loadChart();
+
+        // Auto-refresh every 5 mins
+        autoRefreshTimer = setInterval(() => {
+          refreshChart();
+        }, 3000000);
+      });
+    </script>
+  </body>
+</html>
