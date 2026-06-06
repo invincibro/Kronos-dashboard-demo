@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.claude/
+demo/__pycache__/
+demo/data/
+demo/prediction_history/
+model/__pycache__/
+agent_work_log.md
+overview.md
+webui/
+*.md
