@@ -135,9 +135,26 @@ def api_chart():
         "#FF8C00",  # dark orange
         "#DC143C",  # crimson
         "#FF69B4",  # hot pink
+        "#1E90FF",  # dodger blue
+        "#32CD32",  # lime green
+        "#FFD700",  # gold
+        "#8A2BE2",  # blue violet
+        "#00CED1",  # dark turquoise
+        "#FF4500",  # orange red
+        "#7FFF00",  # chartreuse
+        "#00FA9A",  # medium spring green
+        "#4169E1",  # royal blue
+        "#BA55D3",  # medium orchid
+        "#FF1493",  # deep pink
+        "#20B2AA",  # light sea green
+        "#FF6347",  # tomato
+        "#9370DB",  # medium purple
+        "#00BFFF",  # deep sky blue
+        "#ADFF2F",  # green yellow
+        "#FFA500",  # orange
     ]
     # display the most recent 3 predictions for clarity
-    for i, record in enumerate(records[-3:]):
+    for i, record in enumerate(records):
         preds = record["predictions"]
         if not preds:
             continue
@@ -167,12 +184,12 @@ def api_chart():
     # Calculate x-axis range: last 24h historical + all prediction data
     x_start = (df["timestamps"].iloc[-1] - timedelta(hours=24)).isoformat()
     x_end = df["timestamps"].iloc[-1].isoformat()
-    for record in records[-3:]:
-        preds = record.get("predictions", [])
-        if preds:
-            last_pred_ts = preds[-1]["timestamp"]
-            if last_pred_ts > x_end:
-                x_end = last_pred_ts
+    record = records[-1]
+    preds = record.get("predictions", [])
+    if preds:
+        last_pred_ts = preds[-1]["timestamp"]
+        if last_pred_ts > x_end:
+            x_end = last_pred_ts
 
     # Layout
     fig.update_layout(
