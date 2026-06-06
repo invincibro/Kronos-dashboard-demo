@@ -97,7 +97,7 @@ class PredictionScheduler:
                 sample_count=self.sample_count,
             )
 
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             save_prediction(pred_df, now, self.history_dir)
 
             with self._lock:
